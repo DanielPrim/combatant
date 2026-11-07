@@ -1,0 +1,379 @@
+{
+  "start": {
+    "money": 100,
+    "soldiers": 2,
+    "staff": 1,
+    "weapon_id": "aksu",
+    "barracks_id": "barracks",
+    "x": 2720,
+    "y": 1460,
+    "mission_gap_minutes": 1440,
+    "mission_jitter_minutes": 1440,
+    "mission_board": 3,
+    "council_pay": 50,
+    "council_every_minutes": 43200,
+    "max_staff_bonus": 5,
+    "surgery_minutes": 1440,
+    "acclimation_minutes": 43200,
+    "stock": [
+      {"id": "aksu", "count": 3},
+      {"id": "ppsh", "count": 3},
+      {"id": "mosin", "count": 3}
+    ],
+    "stock_items": [
+      {"id": "vest", "count": 2},
+      {"id": "helm", "count": 2},
+      {"id": "ball", "count": 6},
+      {"id": "762t", "count": 4},
+      {"id": "762r", "count": 4}
+    ]
+  },
+  "buildings": [
+    {
+      "id": "barracks",
+      "name": "Barracks",
+      "cost": {"Money": 40},
+      "days": 4,
+      "barracks_slots": 4,
+      "power_use": 2
+    },
+    {
+      "id": "lab",
+      "name": "Laboratory",
+      "cost": {"Money": 60},
+      "days": 6,
+      "laboratory": true,
+      "power_use": 3
+    },
+    {
+      "id": "shop",
+      "name": "Workshop",
+      "cost": {"Money": 50},
+      "days": 5,
+      "workshop": true,
+      "power_use": 2
+    },
+    {
+      "id": "hangar",
+      "name": "Hangar",
+      "cost": {"Money": 80},
+      "days": 4,
+      "transport_slots": 1,
+      "power_use": 2
+    },
+    {
+      "id": "reactor",
+      "name": "Реактор",
+      "cost": {"Money": 90, "Alloys": 4},
+      "days": 6,
+      "power_use": 0,
+      "power_gen": 12
+    }
+  ],
+  "research": [
+    {
+      "id": "medkits",
+      "name": "Полевая медицина",
+      "cost": {"Money": 20},
+      "days": 2,
+      "prerequisites": []
+    },
+    {
+      "id": "kalashnikov",
+      "name": "Автоматы Калашникова",
+      "cost": {"Money": 40, "Alloys": 4},
+      "days": 3,
+      "prerequisites": ["medkits"]
+    },
+    {
+      "id": "marksman",
+      "name": "Марксманское оружие",
+      "cost": {"Money": 50, "Alloys": 4},
+      "days": 4,
+      "prerequisites": ["kalashnikov"]
+    },
+    {
+      "id": "special-arms",
+      "name": "Специальное оружие",
+      "cost": {"Money": 70, "Components": 4},
+      "days": 5,
+      "prerequisites": ["marksman"]
+    },
+    {
+      "id": "modern-arms",
+      "name": "Современное стрелковое",
+      "cost": {"Money": 80, "Components": 4, "Chips": 2},
+      "days": 5,
+      "prerequisites": ["special-arms"]
+    },
+    {
+      "id": "modern-armor",
+      "name": "Современная защита",
+      "cost": {"Money": 60, "Alloys": 6},
+      "days": 4,
+      "prerequisites": ["kalashnikov"]
+    },
+    {
+      "id": "supply",
+      "name": "Полевое снабжение",
+      "cost": {"Money": 15},
+      "days": 2,
+      "prerequisites": ["medkits"]
+    }
+  ],
+  "tasks": [
+    {
+      "id": "sweep",
+      "task": "assault",
+      "region": "siberia",
+      "difficulty": 2,
+      "work_minutes": 90,
+      "x0": 2690,
+      "x1": 2760,
+      "y0": 1440,
+      "y1": 1490,
+      "lifetime_minutes": 10080,
+      "rewards": {"Money": 30},
+      "items": ["medkit"],
+      "experience": 5
+    },
+    {
+      "id": "cache",
+      "task": "raid",
+      "region": "siberia",
+      "difficulty": 2,
+      "work_minutes": 70,
+      "x0": 2660,
+      "x1": 2740,
+      "y0": 1420,
+      "y1": 1480,
+      "lifetime_minutes": 10080,
+      "rewards": {"Alloys": 2},
+      "experience": 4
+    },
+    {
+      "id": "listen",
+      "task": "recon",
+      "region": "siberia",
+      "difficulty": 1,
+      "work_minutes": 60,
+      "x0": 2700,
+      "x1": 2780,
+      "y0": 1450,
+      "y1": 1510,
+      "lifetime_minutes": 10080,
+      "rewards": {"Money": 15},
+      "experience": 3
+    },
+    {
+      "id": "lift",
+      "task": "evacuation",
+      "region": "siberia",
+      "difficulty": 2,
+      "work_minutes": 80,
+      "x0": 2680,
+      "x1": 2750,
+      "y0": 1430,
+      "y1": 1475,
+      "lifetime_minutes": 10080,
+      "rewards": {"Money": 25},
+      "experience": 4
+    },
+    {
+      "id": "snatch",
+      "task": "capture",
+      "region": "siberia",
+      "difficulty": 2,
+      "work_minutes": 90,
+      "x0": 2710,
+      "x1": 2770,
+      "y0": 1445,
+      "y1": 1500,
+      "lifetime_minutes": 10080,
+      "rewards": {"Money": 40},
+      "experience": 6
+    },
+    {
+      "id": "hold",
+      "task": "defense",
+      "region": "siberia",
+      "difficulty": 2,
+      "work_minutes": 120,
+      "x0": 2670,
+      "x1": 2730,
+      "y0": 1455,
+      "y1": 1505,
+      "lifetime_minutes": 10080,
+      "rewards": {"Money": 20},
+      "experience": 4
+    },
+    {
+      "id": "plant",
+      "task": "sabotage",
+      "region": "siberia",
+      "difficulty": 2,
+      "work_minutes": 70,
+      "x0": 2720,
+      "x1": 2790,
+      "y0": 1435,
+      "y1": 1485,
+      "lifetime_minutes": 10080,
+      "rewards": {"Money": 35},
+      "experience": 5
+    },
+    {
+      "id": "wreck",
+      "task": "destruction",
+      "region": "siberia",
+      "difficulty": 2,
+      "work_minutes": 100,
+      "x0": 2650,
+      "x1": 2720,
+      "y0": 1460,
+      "y1": 1520,
+      "lifetime_minutes": 10080,
+      "rewards": {"Alloys": 3},
+      "experience": 5
+    },
+    {
+      "id": "ural-raid",
+      "task": "raid",
+      "region": "ural",
+      "difficulty": 2,
+      "work_minutes": 80,
+      "x0": 2260,
+      "x1": 2340,
+      "y0": 1460,
+      "y1": 1520,
+      "lifetime_minutes": 10080,
+      "rewards": {"Alloys": 3},
+      "experience": 5
+    },
+    {
+      "id": "east-recon",
+      "task": "recon",
+      "region": "far-east",
+      "difficulty": 2,
+      "work_minutes": 70,
+      "x0": 3180,
+      "x1": 3280,
+      "y0": 1440,
+      "y1": 1500,
+      "lifetime_minutes": 10080,
+      "rewards": {"Money": 25},
+      "experience": 4
+    },
+    {
+      "id": "asia-cache",
+      "task": "raid",
+      "region": "central-asia",
+      "difficulty": 3,
+      "work_minutes": 80,
+      "x0": 2400,
+      "x1": 2480,
+      "y0": 1300,
+      "y1": 1360,
+      "lifetime_minutes": 10080,
+      "rewards": {"Components": 2},
+      "experience": 6
+    },
+    {
+      "id": "china-sweep",
+      "task": "assault",
+      "region": "east-asia",
+      "difficulty": 3,
+      "work_minutes": 90,
+      "x0": 2920,
+      "x1": 3000,
+      "y0": 1180,
+      "y1": 1240,
+      "lifetime_minutes": 10080,
+      "rewards": {"Money": 45},
+      "experience": 6
+    },
+    {
+      "id": "europe-hold",
+      "task": "defense",
+      "region": "europe",
+      "difficulty": 3,
+      "work_minutes": 110,
+      "x0": 1860,
+      "x1": 1940,
+      "y0": 1400,
+      "y1": 1460,
+      "lifetime_minutes": 10080,
+      "rewards": {"Money": 50},
+      "experience": 6
+    },
+    {
+      "id": "levant-snatch",
+      "task": "capture",
+      "region": "middle-east",
+      "difficulty": 3,
+      "work_minutes": 90,
+      "x0": 2220,
+      "x1": 2300,
+      "y0": 1140,
+      "y1": 1200,
+      "lifetime_minutes": 10080,
+      "rewards": {"Chips": 1},
+      "experience": 7
+    },
+    {
+      "id": "india-plant",
+      "task": "sabotage",
+      "region": "south-asia",
+      "difficulty": 3,
+      "work_minutes": 80,
+      "x0": 2560,
+      "x1": 2640,
+      "y0": 1080,
+      "y1": 1140,
+      "lifetime_minutes": 10080,
+      "rewards": {"Components": 3},
+      "experience": 6
+    },
+    {
+      "id": "africa-wreck",
+      "task": "destruction",
+      "region": "africa",
+      "difficulty": 3,
+      "work_minutes": 100,
+      "x0": 1900,
+      "x1": 1980,
+      "y0": 900,
+      "y1": 980,
+      "lifetime_minutes": 10080,
+      "rewards": {"Alloys": 4},
+      "experience": 7
+    },
+    {
+      "id": "america-sweep",
+      "task": "assault",
+      "region": "north-america",
+      "difficulty": 4,
+      "work_minutes": 100,
+      "x0": 700,
+      "x1": 820,
+      "y0": 1320,
+      "y1": 1400,
+      "lifetime_minutes": 10080,
+      "rewards": {"Money": 80, "Chips": 1},
+      "experience": 8
+    },
+    {
+      "id": "andes-listen",
+      "task": "recon",
+      "region": "south-america",
+      "difficulty": 3,
+      "work_minutes": 80,
+      "x0": 1120,
+      "x1": 1200,
+      "y0": 700,
+      "y1": 780,
+      "lifetime_minutes": 10080,
+      "rewards": {"Money": 40},
+      "experience": 6
+    }
+  ]
+}

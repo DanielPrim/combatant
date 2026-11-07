@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <map>
+#include "shared/resourceType.hpp"
 
 namespace project {
     enum class Category {  
@@ -8,7 +9,8 @@ namespace project {
         Armor,
         Consumable,
         AmmoType,
-        Augment
+        Augment,
+        Attachment
     };
     enum class TechRank{
         Basic,
@@ -19,13 +21,6 @@ namespace project {
         SpecialPlus,
         Alien,
         AlienPlus,
-    };
-    enum class ResourceType { 
-        Money, 
-        Alloys, 
-        Components, 
-        Chips,
-        EnergyBlock
     };
     class Item {
         public:

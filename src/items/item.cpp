@@ -6,7 +6,7 @@ Item::Item(std::string id, std::string name, std::string description, TechRank t
     : id_(std::move(id))
     , name_(std::move(name))
     , description_(std::move(description))
-    , techRank_(techRank)
+    , techRank_(tech_rank)
     , cost_(std::move(cost))
     , price_(price)
 {

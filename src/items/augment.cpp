@@ -18,7 +18,7 @@ namespace project {
      , effects_(std::move(effects))
      , limb_origin_(limb_origin)
     {
-        assert(limb_origin == LimbOrigin::Cybernetic || limb_origin == LimbOrigin::Synthetic);
+        assert(limb_origin == LimbOrigin::Cybernetic || limb_origin == LimbOrigin::Synthetic); // GCOVR_EXCL_BR_LINE
     }
     Category Augment::category() const noexcept {
         return Category::Augment;

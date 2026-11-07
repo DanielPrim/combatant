@@ -14,6 +14,7 @@ namespace project {
             const std::map<StatsUnderEffect, int>& statsBonus() const noexcept;
             const std::vector<std::string>& skills() const noexcept;
             int skillPoints() const noexcept;
+            int daysNeeded() const noexcept;
             int experienceNeeded() const noexcept;
         private:
             std::string id_;
@@ -22,6 +23,7 @@ namespace project {
             std::map<StatsUnderEffect, int> statsBonus_;
             std::vector<std::string> skills_;
             int skillPoints_;
+            int daysNeeded_;
             int experienceNeeded_;
     };
 }

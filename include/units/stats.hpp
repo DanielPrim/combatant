@@ -1,5 +1,5 @@
 #pragma once
-#include <string>
+#include "shared/statsUnderEffect.hpp"
 
 namespace project {
     class Stats {
@@ -11,6 +11,7 @@ namespace project {
             int willpower() const noexcept;
             int psi_resistance() const noexcept;
             int intelligence() const noexcept;
+            void add(StatsUnderEffect stat, int value);
             Stats(int strength, int speed, int action_points, int accuracy, int willpower, int psi_resistance, int intelligence);
         private:
             int strength_;

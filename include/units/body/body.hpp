@@ -3,6 +3,7 @@
 #include <set>
 #include <string>
 #include "units/body/limb.hpp"
+#include "units/stats.hpp"
 
 namespace project {
 
@@ -21,6 +22,8 @@ public:
     bool is_vital(const std::string& slot) const noexcept;
 
     const std::map<std::string, Limb>& limbs() const noexcept;
+
+    void apply_effect_modifiers(Stats& stats) const;
 
 private:
     std::map<std::string, Limb> limbs_map_;

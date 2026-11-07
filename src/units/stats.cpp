@@ -40,4 +40,30 @@ Stats::Stats(int strength, int speed, int action_points, int accuracy, int willp
     int Stats::intelligence() const noexcept {
         return intelligence_;
     }
+
+    void Stats::add(StatsUnderEffect stat, int value) {
+        switch (stat) {
+            case StatsUnderEffect::Strength:
+                strength_ += value;
+                break;
+            case StatsUnderEffect::Speed:
+                speed_ += value;
+                break;
+            case StatsUnderEffect::ActionPoints:
+                action_points_ += value;
+                break;
+            case StatsUnderEffect::Accuracy:
+                accuracy_ += value;
+                break;
+            case StatsUnderEffect::Willpower:
+                willpower_ += value;
+                break;
+            case StatsUnderEffect::PsiResistance:
+                psi_resistance_ += value;
+                break;
+            case StatsUnderEffect::Intelligence:
+                intelligence_ += value;
+                break;
+        }
+    }
 }

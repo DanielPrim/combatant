@@ -1,5 +1,6 @@
 #include "units/body/limb.hpp"
 #include <algorithm>
+#include <stdexcept>
 
 namespace project {
     Limb::Limb(int max_health, LimbOrigin origin, int resistance, DamageType damage_resistance, std::vector<Effect> effects)
@@ -54,5 +55,29 @@ namespace project {
     }
     bool Limb::is_destroyed() const noexcept {
         return is_destroyed_;
+    }
+    void Limb::wound(int amount) {
+        if (amount <= 0) {
+            throw std::invalid_argument("Wound must be positive");
+        }
+        current_health_ = std::max(0, current_health_ - amount);
+        if (current_health_ == 0) {
+            is_destroyed_ = true;
+        }
+    }
+    void Limb::heal(int amount) {
+        if (amount <= 0) {
+            throw std::invalid_argument("Heal must be positive");
+        }
+        if (is_destroyed_) {
+            return;
+        }
+        current_health_ += amount;
+        if (current_health_ > max_health_) {
+            current_health_ = max_health_;
+        }
+    }
+    bool Limb::needs_care() const noexcept {
+        return is_destroyed_ || current_health_ * 2 < max_health_;
     }
 }

@@ -38,4 +38,14 @@ const std::map<std::string, Limb>& Body::limbs() const noexcept {
     return limbs_map_;
 }
 
+void Body::apply_effect_modifiers(Stats& stats) const {
+    for (const auto& entry : limbs_map_) {
+        for (const Effect& effect : entry.second.effects()) {
+            for (const auto& [stat, value] : effect.stats()) {
+                stats.add(stat, value);
+            }
+        }
+    }
+}
+
 }

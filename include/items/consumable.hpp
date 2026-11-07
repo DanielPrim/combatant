@@ -5,7 +5,6 @@ namespace project {
      public:
        Category category() const noexcept override;
        int count() const noexcept;
-    protected:
       Consumable(
         std::string id, 
         std::string name, 

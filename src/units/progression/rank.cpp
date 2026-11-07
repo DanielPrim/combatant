@@ -1,13 +1,14 @@
 #include "units/progression/rank.hpp"
 
 namespace project {
-    Rank::Rank(std::string id, std::string name, std::string description, std::map<StatsUnderEffect, int> statsBonus, std::vector<std::string> skills, int skillPoints, int experienceNeeded)
+    Rank::Rank(std::string id, std::string name, std::string description, std::map<StatsUnderEffect, int> statsBonus, std::vector<std::string> skills, int skillPoints, int daysNeeded, int experienceNeeded)
         : id_(std::move(id))
         , name_(std::move(name))
         , description_(std::move(description))
         , statsBonus_(std::move(statsBonus))
         , skills_(std::move(skills))
         , skillPoints_(skillPoints)
+        , daysNeeded_(daysNeeded)
         , experienceNeeded_(experienceNeeded)
     {
     }
@@ -28,6 +29,9 @@ namespace project {
     }
     int Rank::skillPoints() const noexcept {
         return skillPoints_;
+    }
+    int Rank::daysNeeded() const noexcept {
+        return daysNeeded_;
     }
     int Rank::experienceNeeded() const noexcept {
         return experienceNeeded_;
