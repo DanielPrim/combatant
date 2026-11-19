@@ -16,10 +16,11 @@ enum class AppId {
     Market,
     Workshop,
     Laboratory,
+    Monitor,
     Treasury
 };
 
-inline constexpr int kAppCount = 8;
+inline constexpr int kAppCount = 9;
 
 enum class NoticeLevel { Stop, Toast };
 

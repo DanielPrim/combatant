@@ -45,6 +45,7 @@ target_include_directories(combatant PUBLIC
 )
 
 target_compile_definitions(combatant PUBLIC SPDLOG_HEADER_ONLY)
+target_compile_definitions(combatant PRIVATE "COMBATANT_DATA_DIR=\"${CMAKE_SOURCE_DIR}/data\"")
 
 if(MSVC)
     target_compile_options(combatant PUBLIC /utf-8)

@@ -52,8 +52,20 @@ std::string roll_name(std::mt19937& rng) {
 }
 
 Body plain_body() {
-    Limb torso(8, LimbOrigin::Natural, 0, DamageType(0, 0, 0, 0, 0, 0, 0, 0), {});
-    return Body({{"torso", std::move(torso)}}, {"torso"});
+    const DamageType none(0, 0, 0, 0, 0, 0, 0, 0);
+    Limb head(6, LimbOrigin::Natural, 0, none, {});
+    Limb arm_left(8, LimbOrigin::Natural, 0, none, {});
+    Limb arm_right(8, LimbOrigin::Natural, 0, none, {});
+    Limb leg_left(8, LimbOrigin::Natural, 0, none, {});
+    Limb leg_right(8, LimbOrigin::Natural, 0, none, {});
+    Limb torso(8, LimbOrigin::Natural, 0, none, {});
+    return Body({{"head", std::move(head)},
+                 {"arm-left", std::move(arm_left)},
+                 {"arm-right", std::move(arm_right)},
+                 {"leg-left", std::move(leg_left)},
+                 {"leg-right", std::move(leg_right)},
+                 {"torso", std::move(torso)}},
+                {"head", "torso"});
 }
 
 std::map<ResourceType, int> scaled_cost(const std::map<ResourceType, int>& cost, int count) {

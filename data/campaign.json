@@ -79,25 +79,74 @@
       "prerequisites": []
     },
     {
-      "id": "kalashnikov",
-      "name": "Автоматы Калашникова",
-      "cost": {"Money": 40, "Alloys": 4},
+      "id": "armory",
+      "name": "Оружейная",
+      "cost": {"Money": 25, "Alloys": 2},
+      "days": 2,
+      "prerequisites": []
+    },
+    {
+      "id": "plates",
+      "name": "Бронеплиты",
+      "cost": {"Money": 25, "Alloys": 3},
+      "days": 2,
+      "prerequisites": []
+    },
+    {
+      "id": "surgery",
+      "name": "Полевая хирургия",
+      "cost": {"Money": 30, "Components": 2},
       "days": 3,
       "prerequisites": ["medkits"]
     },
     {
+      "id": "prosthetics",
+      "name": "Протезирование",
+      "cost": {"Money": 45, "Alloys": 4},
+      "days": 4,
+      "prerequisites": ["surgery"]
+    },
+    {
+      "id": "thorax",
+      "name": "Протез торса",
+      "cost": {"Money": 60, "Alloys": 6, "Components": 2},
+      "days": 5,
+      "prerequisites": ["prosthetics"]
+    },
+    {
+      "id": "limb-drive",
+      "name": "Силовой каркас",
+      "cost": {"Money": 70, "Alloys": 6, "Chips": 2},
+      "days": 5,
+      "prerequisites": ["thorax"]
+    },
+    {
+      "id": "kalashnikov",
+      "name": "Калашников",
+      "cost": {"Money": 40, "Alloys": 4},
+      "days": 3,
+      "prerequisites": ["armory"]
+    },
+    {
       "id": "marksman",
-      "name": "Марксманское оружие",
+      "name": "Марксман",
       "cost": {"Money": 50, "Alloys": 4},
       "days": 4,
       "prerequisites": ["kalashnikov"]
     },
     {
       "id": "special-arms",
-      "name": "Специальное оружие",
+      "name": "Спецоружие",
       "cost": {"Money": 70, "Components": 4},
       "days": 5,
-      "prerequisites": ["marksman"]
+      "prerequisites": ["kalashnikov"]
+    },
+    {
+      "id": "optics",
+      "name": "Оптика",
+      "cost": {"Money": 35, "Components": 3},
+      "days": 3,
+      "prerequisites": ["kalashnikov"]
     },
     {
       "id": "modern-arms",
@@ -107,11 +156,32 @@
       "prerequisites": ["special-arms"]
     },
     {
+      "id": "night-optics",
+      "name": "Ночная оптика",
+      "cost": {"Money": 60, "Components": 3, "Chips": 2},
+      "days": 4,
+      "prerequisites": ["optics"]
+    },
+    {
+      "id": "carriers",
+      "name": "Разгрузки",
+      "cost": {"Money": 30, "Alloys": 2},
+      "days": 2,
+      "prerequisites": ["plates"]
+    },
+    {
       "id": "modern-armor",
       "name": "Современная защита",
       "cost": {"Money": 60, "Alloys": 6},
       "days": 4,
-      "prerequisites": ["kalashnikov"]
+      "prerequisites": ["carriers"]
+    },
+    {
+      "id": "ratnik",
+      "name": "Ратник",
+      "cost": {"Money": 80, "Alloys": 4, "Components": 4},
+      "days": 5,
+      "prerequisites": ["modern-armor"]
     },
     {
       "id": "supply",

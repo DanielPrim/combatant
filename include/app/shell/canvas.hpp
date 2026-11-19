@@ -16,6 +16,8 @@ public:
     virtual void push_clip(int, int, int, int) {}
     virtual void pop_clip() {}
     virtual void fill_polygon(const std::vector<std::pair<int, int>>&, unsigned) {}
+    virtual void stroke_polygon(const std::vector<std::pair<int, int>>&, unsigned, int) {}
+    virtual void blit(std::string_view, int, int, int, int, float, float, float, float) {}
     virtual void desktop_icon(int x, int y, int w, int h, std::string_view, std::string_view label) {
         fill(x, y, w, h, 0xECE9D8);
         text(x + 6, y + 6, label, 0);
@@ -54,6 +56,12 @@ struct Scene {
         std::string hot;
         int z = 0;
         std::vector<std::pair<int, int>> poly;
+        std::string image;
+        float u = 0;
+        float v = 0;
+        float uw = 1;
+        float vh = 1;
+        int stroke = 0;
     };
     std::vector<Cmd> cmds;
 };

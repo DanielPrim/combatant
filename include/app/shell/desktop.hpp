@@ -34,6 +34,8 @@ public:
 
     Scene build(const Base& base, const Catalog& catalog, const CampaignContent& content) const;
     bool wants_quit() const noexcept;
+    bool wants_fullscreen() const noexcept;
+    void toggle_fullscreen() noexcept;
     bool dialog() const noexcept;
     const std::string& message() const noexcept;
     int badge(AppId app) const noexcept;
@@ -53,9 +55,12 @@ private:
     void open_app(AppId app);
     void focus_app(AppId app);
     void accept(const Notice& notice, TimeControl& time);
+    void open_notice(const Notice& notice);
     std::string hot_at(int x, int y, const Base& base, const Catalog& catalog, const CampaignContent& content) const;
     bool visible(AppId app) const;
     bool map_focused() const;
+    void clamp_map();
+    void clamp_tree();
     Window* find_window(AppId app);
     const Window* find_window(AppId app) const;
     void guard(const std::function<void()>& action);
@@ -66,7 +71,19 @@ private:
     void read_slot(Base& base, const Catalog& catalog) const;
 
     std::vector<Window> windows_;
+    struct Toast {
+        Notice notice;
+        double seconds_left = 10;
+    };
+    struct LogLine {
+        int minute = 0;
+        std::string text;
+    };
+
     std::vector<Notice> queue_;
+    std::vector<Toast> toasts_;
+    std::vector<LogLine> log_;
+    bool log_open_ = false;
     int badges_[kAppCount] = {};
     std::filesystem::path save_path_;
     bool start_open_ = false;
@@ -109,13 +126,25 @@ private:
     int grab_h_ = 0;
     AppId drag_app_ = AppId::Situation;
     TimeScale shown_scale_ = TimeScale::Geoscape;
-    double map_lon_ = 30;
-    double map_lat_ = 25;
+    double map_lon_ = 0;
+    double map_lat_ = 0;
     double map_span_ = 360;
+    bool panning_ = false;
+    bool tree_panning_ = false;
+    int tree_pan_x_ = 0;
+    int tree_pan_y_ = 0;
+    double pan_lon_ = 0;
+    double pan_lat_ = 0;
+    bool board_open_ = false;
     bool save_mode_ = false;
     bool load_mode_ = false;
     int save_slot_ = 1;
     std::string save_name_;
+    std::string gear_slot_ = "PrimaryWeapon";
+    bool inspecting_ = false;
+    std::string inspect_slot_;
+    bool picking_ = false;
+    bool fullscreen_ = false;
 };
 
 }

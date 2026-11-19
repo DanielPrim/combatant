@@ -144,6 +144,8 @@ void Desktop::type(std::wstring_view text) {
 }
 const std::filesystem::path& Desktop::save_path() const noexcept { return save_path_; }
 bool Desktop::wants_quit() const noexcept { return quit_; }
+bool Desktop::wants_fullscreen() const noexcept { return fullscreen_; }
+void Desktop::toggle_fullscreen() noexcept { fullscreen_ = !fullscreen_; }
 bool Desktop::dialog() const noexcept { return !queue_.empty() || !message_.empty(); }
 const std::string& Desktop::message() const noexcept { return message_; }
 int Desktop::badge(AppId app) const noexcept { return badges_[static_cast<int>(app)]; }
@@ -158,6 +160,40 @@ void Desktop::guard(const std::function<void()>& action) {
 
 bool Desktop::map_focused() const {
     return !windows_.empty() && windows_.back().app == AppId::Situation && !windows_.back().minimized;
+}
+
+void Desktop::clamp_map() {
+    const double half_lon = map_span_ * 0.5;
+    if (half_lon >= 180.0) {
+        map_lon_ = 0.0;
+    } else {
+        map_lon_ = std::clamp(map_lon_, -180.0 + half_lon, 180.0 - half_lon);
+    }
+    const Window* window = find_window(AppId::Situation);
+    const int map_w = std::max(1, window != nullptr ? window->w : 640);
+    const int map_h = std::max(1, window != nullptr ? window->h - 32 : 480);
+    const double half_lat = map_span_ * static_cast<double>(map_h) / static_cast<double>(map_w) * 0.5;
+    const double south = -75.0 + half_lat;
+    const double north = 80.0 - half_lat;
+    if (south >= north) {
+        map_lat_ = 0.0;
+    } else {
+        map_lat_ = std::clamp(map_lat_, south, north);
+    }
+}
+
+void Desktop::clamp_tree() {
+    const Window* window = find_window(AppId::Laboratory);
+    const int width = window != nullptr ? window->w - 16 : 884;
+    const int height = window != nullptr ? window->h : 620;
+    const int view_w = std::max(148, width - 236);
+    const int view_h = std::max(80, height - 76);
+    constexpr int content_w = 3 * 160 + 148;
+    constexpr int content_h = 6 * 46 + 36;
+    const int min_x = 80 - content_w;
+    const int min_y = 80 - content_h;
+    tree_pan_x_ = std::clamp(tree_pan_x_, min_x, std::max(min_x, view_w - 80));
+    tree_pan_y_ = std::clamp(tree_pan_y_, min_y, std::max(min_y, view_h - 80));
 }
 
 bool Desktop::visible(AppId app) const {
@@ -210,16 +246,32 @@ void Desktop::open_app(AppId app) {
         return;
     }
     if (find_window(app) == nullptr) {
-        windows_.push_back(Window{app, 116, 16, 900, 620, false});
+        if (app == AppId::Situation) {
+            windows_.push_back(Window{app, 108, 0, kDeskW - 108, kDeskH - kBarH, false});
+        } else {
+            windows_.push_back(Window{app, 116, 16, 900, 620, false});
+        }
     }
     focus_app(app);
 }
 
-void Desktop::accept(const Notice& notice, TimeControl& time) {
+std::string spoken(const Notice& notice) {
+    if (notice.text.empty() || notice.text == notice.type) {
+        const std::string speech = event_speech(notice.type);
+        if (!speech.empty()) {
+            return speech;
+        }
+    }
+    return notice.text.empty() ? notice.type : notice.text;
+}
+
+void Desktop::open_notice(const Notice& notice) {
     actor_ = notice.actor;
     if (notice.app == AppId::Situation) {
-        offer_id_ = notice.actor;
-        operation_id_ = notice.actor;
+        if (!notice.actor.empty()) {
+            offer_id_ = notice.actor;
+            operation_id_ = notice.actor;
+        }
     } else if (notice.app == AppId::Personnel) {
         person_id_ = notice.actor;
         card_open_ = !notice.actor.empty();
@@ -233,34 +285,44 @@ void Desktop::accept(const Notice& notice, TimeControl& time) {
         treasury_flash_ = true;
     }
     open_app(notice.app);
-    if (queue_.empty()) {
-        time.resume(suggested_scale(notice.type));
+}
+
+void Desktop::accept(const Notice& notice, TimeControl& time) {
+    open_notice(notice);
+    if (queue_.empty() && time.scale() == TimeScale::Paused) {
+        time.resume(TimeScale::Geoscape);
     }
 }
 
 bool Desktop::ingest(const std::vector<SimEvent>& events, TimeControl& time) {
-    std::vector<Notice> batch;
+    struct Posted {
+        Notice notice;
+        int minute = 0;
+    };
+    std::vector<Posted> batch;
     for (const SimEvent& event : events) {
         if (std::optional<Notice> notice = route_event(event)) {
-            batch.push_back(*notice);
+            batch.push_back({*notice, event.minute});
         }
     }
-    std::stable_partition(batch.begin(), batch.end(), [](const Notice& notice) {
-        return notice.level == NoticeLevel::Stop;
-    });
     if (batch.empty()) {
         return false;
     }
-    const bool on_map = map_focused();
-    for (const Notice& notice : batch) {
-        feed_.push_back(notice.text.empty() ? notice.type : notice.text);
+    for (const Posted& posted : batch) {
+        const Notice& notice = posted.notice;
+        const std::string line = spoken(notice);
+        feed_.push_back(line);
         if (feed_.size() > 16) {
             feed_.erase(feed_.begin());
         }
-        if (on_map) {
-            continue;
+        log_.push_back(LogLine{posted.minute, line});
+        toasts_.push_back(Toast{notice, 10});
+        if (toasts_.size() > 7) {
+            toasts_.erase(toasts_.begin());
         }
-        queue_.push_back(notice);
+        if (notice.type == "mission_posted" || notice.type == "mission_expired" || notice.type == "mission_unfulfilled") {
+            board_open_ = true;
+        }
         if (notice.type == "manufacture_done" && !visible(AppId::Warehouse)) {
             ++badges_[static_cast<int>(AppId::Warehouse)];
         }
@@ -271,26 +333,31 @@ bool Desktop::ingest(const std::vector<SimEvent>& events, TimeControl& time) {
             treasury_flash_ = true;
         }
     }
-    if (!on_map) {
-        time.pause();
+    if (time.scale() != TimeScale::Geoscape) {
+        time.resume(TimeScale::Geoscape);
     }
     return true;
 }
 
 void Desktop::advance(Base& base, TimeControl& time, double real_seconds, const IBattleResolver* resolver) {
-    if (!queue_.empty() || !message_.empty() || save_mode_ || load_mode_) {
+    for (Toast& toast : toasts_) {
+        toast.seconds_left -= real_seconds;
+    }
+    std::erase_if(toasts_, [](const Toast& toast) { return toast.seconds_left <= 0; });
+    const int cutoff = base.minute() - kMinutesPerDay;
+    std::erase_if(log_, [&](const LogLine& line) { return line.minute < cutoff; });
+    if (!message_.empty() || save_mode_ || load_mode_) {
         return;
     }
     const TimeScale before = time.scale();
     if (before == TimeScale::Paused) {
+        shown_scale_ = time.scale();
         return;
     }
     const FrameStep frame = step_frame(base, time, real_seconds, resolver);
-    const std::size_t queued = queue_.size();
-    if (ingest(frame.events, time)) {
-        time.pause();
-    } else if (queue_.size() == queued && time.scale() == TimeScale::Paused && before != TimeScale::Paused) {
-        time.resume(before);
+    const bool noted = ingest(frame.events, time);
+    if (time.scale() == TimeScale::Paused && before != TimeScale::Paused) {
+        time.resume(noted ? TimeScale::Geoscape : before);
     }
     shown_scale_ = time.scale();
 }
@@ -300,7 +367,7 @@ std::string Desktop::hot_at(int x, int y, const Base& base, const Catalog& catal
     const int floor = !message_.empty() ? 100 : !queue_.empty() ? 80 : 0;
     const Scene::Cmd* hit = nullptr;
     for (const Scene::Cmd& cmd : scene.cmds) {
-        if (cmd.hot.empty() || cmd.z < floor || cmd.w <= 0 || cmd.h <= 0) {
+        if (cmd.hot.empty() || cmd.hot == "clip" || cmd.hot == "unclip" || cmd.z < floor || cmd.w <= 0 || cmd.h <= 0) {
             continue;
         }
         if (x < cmd.x || y < cmd.y || x >= cmd.x + cmd.w || y >= cmd.y + cmd.h) {
@@ -321,6 +388,16 @@ void Desktop::input(Pointer pointer, Base& base, TimeControl& time, const Catalo
         dragged_ = false;
         dragging_ = press_hot_.starts_with("drag:");
         sizing_ = press_hot_.starts_with("grip:");
+        panning_ = press_hot_ == "map:pan";
+        tree_panning_ = press_hot_ == "tree:pan";
+        if (panning_) {
+            pan_lon_ = map_lon_;
+            pan_lat_ = map_lat_;
+        }
+        if (tree_panning_) {
+            grab_x_ = tree_pan_x_;
+            grab_y_ = tree_pan_y_;
+        }
         if (dragging_ || sizing_) {
             const std::string key = press_hot_.substr(5);
             if (const std::optional<AppId> app = app_by_key(key)) {
@@ -334,11 +411,25 @@ void Desktop::input(Pointer pointer, Base& base, TimeControl& time, const Catalo
             }
         }
     }
-    if (pointer.down && (dragging_ || sizing_)) {
+    if (pointer.down && (dragging_ || sizing_ || panning_ || tree_panning_)) {
         const int dx = pointer.x - press_x_;
         const int dy = pointer.y - press_y_;
         if (std::abs(dx) + std::abs(dy) > 3) {
             dragged_ = true;
+        }
+        if (panning_) {
+            const Window* window = find_window(AppId::Situation);
+            const int map_w = std::max(1, window != nullptr ? window->w : 640);
+            const int map_h = std::max(1, window != nullptr ? window->h - 32 : 480);
+            const double lat_span = map_span_ * static_cast<double>(map_h) / static_cast<double>(map_w);
+            map_lon_ = pan_lon_ - static_cast<double>(dx) / map_w * map_span_;
+            map_lat_ = pan_lat_ + static_cast<double>(dy) / map_h * lat_span;
+            clamp_map();
+        }
+        if (tree_panning_) {
+            tree_pan_x_ = grab_x_ + dx;
+            tree_pan_y_ = grab_y_ + dy;
+            clamp_tree();
         }
         if (Window* window = find_window(drag_app_)) {
             if (dragging_) {
@@ -362,6 +453,8 @@ void Desktop::input(Pointer pointer, Base& base, TimeControl& time, const Catalo
         }
         dragging_ = false;
         sizing_ = false;
+        panning_ = false;
+        tree_panning_ = false;
     }
     shown_scale_ = time.scale();
 }
@@ -378,6 +471,33 @@ void Desktop::click(int x, int y, Base& base, TimeControl& time, const Catalog& 
 void Desktop::perform(const std::string& hot, Base& base, TimeControl& time, const Catalog& catalog, const CampaignContent& content) {
     if (hot == "msg") {
         message_.clear();
+        return;
+    }
+    if (hot == "log:open") {
+        log_open_ = !log_open_;
+        return;
+    }
+    if (hot == "log:close") {
+        log_open_ = false;
+        return;
+    }
+    if (hot == "log:hold") {
+        return;
+    }
+    if (const std::optional<std::string> index = suffix(hot, "toast:")) {
+        int value = 0;
+        for (const char ch : *index) {
+            if (ch < '0' || ch > '9') {
+                return;
+            }
+            value = value * 10 + (ch - '0');
+        }
+        if (value < 0 || value >= static_cast<int>(toasts_.size())) {
+            return;
+        }
+        const Notice notice = toasts_[static_cast<std::size_t>(value)].notice;
+        toasts_.erase(toasts_.begin() + value);
+        open_notice(notice);
         return;
     }
     if (hot == "balloon") {
@@ -453,18 +573,37 @@ void Desktop::perform(const std::string& hot, Base& base, TimeControl& time, con
         debug_open_ = false;
         return;
     }
+    if (hot == "map:pan" || hot == "board:hold" || hot == "inspect:hold" || hot == "tree:pan") {
+        return;
+    }
+    if (hot == "board:open") {
+        board_open_ = true;
+        open_app(AppId::Situation);
+        return;
+    }
+    if (hot == "map:full" || hot == "game:full") {
+        toggle_fullscreen();
+        return;
+    }
+    if (hot == "board:close") {
+        board_open_ = false;
+        return;
+    }
     if (hot == "map:in") {
         map_span_ = std::max(18.0, map_span_ / 1.4);
+        clamp_map();
         return;
     }
     if (hot == "map:out") {
         map_span_ = std::min(360.0, map_span_ * 1.4);
+        clamp_map();
         return;
     }
     if (hot == "map:home") {
         map_lon_ = world_lon(base.base_x());
         map_lat_ = world_lat(base.base_y());
         map_span_ = 70;
+        clamp_map();
         return;
     }
     if (const std::optional<std::string> slot = suffix(hot, "slot:")) {
@@ -576,7 +715,15 @@ void Desktop::perform(const std::string& hot, Base& base, TimeControl& time, con
         return;
     }
     if (const std::optional<std::string> id = suffix(hot, "offer:")) {
+        if (offer_id_ != *id) {
+            squad_.clear();
+        }
         offer_id_ = *id;
+        picking_ = true;
+        return;
+    }
+    if (hot == "muster:back") {
+        picking_ = false;
         return;
     }
     if (const std::optional<std::string> id = suffix(hot, "squad:")) {
@@ -596,6 +743,7 @@ void Desktop::perform(const std::string& hot, Base& base, TimeControl& time, con
             const SimEvent depart = base.launch_offer(offer_id_, squad_);
             squad_.clear();
             offer_id_.clear();
+            picking_ = false;
             ingest({depart}, time);
         });
         return;
@@ -618,11 +766,13 @@ void Desktop::perform(const std::string& hot, Base& base, TimeControl& time, con
     if (hot == "tab:soldiers") {
         staff_tab_ = false;
         card_open_ = false;
+        inspecting_ = false;
         return;
     }
     if (hot == "tab:staff") {
         staff_tab_ = true;
         card_open_ = false;
+        inspecting_ = false;
         return;
     }
     if (hot == "filter:people") {
@@ -631,9 +781,31 @@ void Desktop::perform(const std::string& hot, Base& base, TimeControl& time, con
     }
     if (hot == "card:back") {
         card_open_ = false;
+        inspecting_ = false;
+        return;
+    }
+    if (hot == "inspect:open") {
+        inspecting_ = true;
+        inspect_slot_.clear();
+        gear_slot_ = "PrimaryWeapon";
+        return;
+    }
+    if (hot == "inspect:close") {
+        inspecting_ = false;
+        inspect_slot_.clear();
+        return;
+    }
+    if (const std::optional<std::string> slot = suffix(hot, "inspect:")) {
+        inspect_slot_ = *slot;
+        return;
+    }
+    if (const std::optional<std::string> slot = suffix(hot, "sector:")) {
+        gear_slot_ = *slot;
+        inspecting_ = false;
         return;
     }
     if (const std::optional<std::string> id = suffix(hot, "person:")) {
+        inspecting_ = false;
         if (person_id_ == *id && !card_open_) {
             card_open_ = true;
         } else {
@@ -775,8 +947,9 @@ void Desktop::perform(const std::string& hot, Base& base, TimeControl& time, con
         });
         return;
     }
-    if (hot == "detach:scope") {
-        guard([&] { base.detach_to_store(person_id_, EquipmentSlotUnit::PrimaryWeapon, EquipmentSlotWeapon::WeaponSlotScope); });
+    if (const std::optional<std::string> slot = suffix(hot, "detach:")) {
+        const EquipmentSlotWeapon socket = *slot == "scope" ? EquipmentSlotWeapon::WeaponSlotScope : weapon_slot_from(*slot);
+        guard([&] { base.detach_to_store(person_id_, EquipmentSlotUnit::PrimaryWeapon, socket); });
         return;
     }
     if (const std::optional<std::string> id = suffix(hot, "mrow:")) {

@@ -4,8 +4,8 @@ namespace project {
 
 namespace {
 
-constexpr std::string_view kTitles[] = {"Карта", "Личный состав", "Склад", "База", "Рынок", "Мастерская", "Лаборатория", "Казна"};
-constexpr std::string_view kKeys[] = {"situation", "personnel", "warehouse", "facilities", "market", "workshop", "laboratory", "treasury"};
+constexpr std::string_view kTitles[] = {"Карта", "Личный состав", "Склад", "База", "Рынок", "Мастерская", "Лаборатория", "Мониторинг", "Казна"};
+constexpr std::string_view kKeys[] = {"situation", "personnel", "warehouse", "facilities", "market", "workshop", "laboratory", "monitor", "treasury"};
 
 bool is_stop(std::string_view type) {
     static constexpr std::string_view stops[] = {

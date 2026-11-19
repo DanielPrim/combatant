@@ -34,6 +34,33 @@ void blank_shot(EventDraft& draft) {
     draft.text = "Оружие пусто.";
 }
 
+std::string wound_slot(const Soldier* soldier, int beat) {
+    if (soldier == nullptr) {
+        return "torso";
+    }
+    const auto& limbs = soldier->body().limbs();
+    int open = 0;
+    for (const auto& entry : limbs) {
+        if (!entry.second.is_destroyed()) {
+            ++open;
+        }
+    }
+    if (open == 0) {
+        return "torso";
+    }
+    int pick = beat < 0 ? 0 : beat % open;
+    for (const auto& entry : limbs) {
+        if (entry.second.is_destroyed()) {
+            continue;
+        }
+        if (pick == 0) {
+            return entry.first;
+        }
+        --pick;
+    }
+    return "torso";
+}
+
 int success_chance(const Operation& operation, int alive) {
     int chance = 50 + 15 * (alive - operation.brief.difficulty);
     if (operation.brief.task == "recon") {
@@ -109,7 +136,7 @@ EventDraft RngBattleResolver::next_event(const Operation& operation,
         std::uniform_int_distribution<int> index(0, static_cast<int>(living.size()) - 1);
         const Soldier* soldier = living[static_cast<std::size_t>(index(rng))];
         draft.actor = soldier->id();
-        draft.slot = "torso";
+        draft.slot = wound_slot(soldier, operation.work_beats);
     }
     const int room = operation.arrived_minute + operation.brief.work_minutes - now;
     std::uniform_int_distribution<int> hundred(0, 99);
@@ -145,7 +172,7 @@ EventDraft RngBattleResolver::next_event(const Operation& operation,
                 draft.text = "Отряд отходит.";
             } else {
                 draft.type = "soldier_wound";
-                draft.text = "Боец ранен в торс.";
+                draft.text = "Боец ранен.";
             }
         } else if (task == "raid") {
             if (operation.work_beats == 0) {
@@ -159,7 +186,7 @@ EventDraft RngBattleResolver::next_event(const Operation& operation,
                 draft.text = "Рейд срывается.";
             } else {
                 draft.type = "soldier_wound";
-                draft.text = "Боец ранен в торс.";
+                draft.text = "Боец ранен.";
             }
         } else if (task == "evacuation") {
             if (ok && operation.work_beats >= 1) {
@@ -170,7 +197,7 @@ EventDraft RngBattleResolver::next_event(const Operation& operation,
                 draft.text = "Люди потеряны.";
             } else if (!ok) {
                 draft.type = "soldier_wound";
-                draft.text = "Боец ранен в торс.";
+                draft.text = "Боец ранен.";
             } else {
                 draft.type = "suppressing_fire";
                 draft.text = "Отряд прикрывает эвакуацию.";
@@ -178,7 +205,7 @@ EventDraft RngBattleResolver::next_event(const Operation& operation,
         } else if (task == "capture") {
             if (operation.work_beats == 0) {
                 draft.type = ok ? "suppressing_fire" : "soldier_wound";
-                draft.text = ok ? "Подавляющий огонь." : "Боец ранен в торс.";
+                draft.text = ok ? "Подавляющий огонь." : "Боец ранен.";
             } else if (ok) {
                 draft.type = "capture_ok";
                 draft.text = "Цель взята живой.";
@@ -187,7 +214,7 @@ EventDraft RngBattleResolver::next_event(const Operation& operation,
                 draft.text = "Цель мертва.";
             } else {
                 draft.type = "soldier_wound";
-                draft.text = "Боец ранен в торс.";
+                draft.text = "Боец ранен.";
             }
         } else if (task == "defense") {
             if (room <= 1) {
@@ -198,7 +225,7 @@ EventDraft RngBattleResolver::next_event(const Operation& operation,
                 draft.text = "Рубеж прорван.";
             } else if (!ok) {
                 draft.type = "soldier_wound";
-                draft.text = "Боец ранен в торс.";
+                draft.text = "Боец ранен.";
             } else {
                 draft.type = "hold_tick";
                 draft.text = "Отряд держит рубеж.";
@@ -215,12 +242,12 @@ EventDraft RngBattleResolver::next_event(const Operation& operation,
                 draft.text = "Диверсия сорвана.";
             } else {
                 draft.type = "soldier_wound";
-                draft.text = "Боец ранен в торс.";
+                draft.text = "Боец ранен.";
             }
         } else if (task == "destruction") {
             if (operation.work_beats == 0) {
                 draft.type = ok ? "enemy_killed" : "soldier_wound";
-                draft.text = ok ? "Враг сбит." : "Боец ранен в торс.";
+                draft.text = ok ? "Враг сбит." : "Боец ранен.";
             } else if (ok) {
                 draft.type = "target_destroyed";
                 draft.text = "Объект разрушен.";
@@ -229,11 +256,11 @@ EventDraft RngBattleResolver::next_event(const Operation& operation,
                 draft.text = "Подрыв не удался.";
             } else {
                 draft.type = "soldier_wound";
-                draft.text = "Боец ранен в торс.";
+                draft.text = "Боец ранен.";
             }
         } else if (operation.work_beats == 0) {
             draft.type = ok ? "enemy_killed" : "soldier_wound";
-            draft.text = ok ? "Враг сбит." : "Боец ранен в торс.";
+            draft.text = ok ? "Враг сбит." : "Боец ранен.";
         } else if (ok) {
             draft.type = "target_eliminated";
             draft.text = "Цель уничтожена.";
@@ -242,7 +269,7 @@ EventDraft RngBattleResolver::next_event(const Operation& operation,
             draft.text = "Штурм срывается.";
         } else {
             draft.type = "soldier_wound";
-            draft.text = "Боец ранен в торс.";
+            draft.text = "Боец ранен.";
         }
         if (is_kill_shot(draft.type) || draft.type == "suppressing_fire" || draft.type == "hold_tick") {
             const Soldier* shooter = nullptr;
